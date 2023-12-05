@@ -55,40 +55,19 @@ calculateConcatenatedNum digits =
     -- take 2 puls the first two digits off the list
     else read (take 2 $ cycle digits) :: Int
 
--- Functions Needed for part 2
-
--- General strat, we want to iterate character by character
---      if one of the words which we are looking for is a prefix of the current string;
---         then replace the current string with the digit (include the last character)
---      else; move forward one character
+-- General strat, replace word with new word then do same as before
 convertWordsToDigits :: String -> String
-convertWordsToDigits str = convertWordsToDigitsHelper str wordToDigitMappings
+convertWordsToDigits str = foldl replace str wordToDigitMappings 
   where
-    wordToDigitMappings = [("one", '1'), ("two", '2'), ("three", '3'), 
-                           ("four", '4'), ("five", '5'), ("six", '6'), 
-                           ("seven", '7'), ("eight", '8'), ("nine", '9')]
+    wordToDigitMappings = [("one", "o1e"), ("two", "t2o"), ("three", "t3e"), 
+                           ("four", "f4r"), ("five", "f5e"), ("six", "s6x"), 
+                           ("seven", "s7n"), ("eight", "e8t"), ("nine", "n9e")]
 
-convertWordsToDigitsHelper :: String -> [(String, Char)] -> String
-convertWordsToDigitsHelper [] _ = [] -- base case
-convertWordsToDigitsHelper str mappings = 
-    case findMapping str mappings of
-        -- if digit is found, prepend as digit
-        Just digit -> digit : convertWordsToDigitsHelper (dropWord str mappings) mappings
-        -- if digit not found, do nothing
-        Nothing -> head str : convertWordsToDigitsHelper (tail str) mappings
+-- Replace function: Replaces all occurrences of a word in a string with another
+replace :: String -> (String, String) -> String
+replace s (old, new) = replace' s
   where
-    -- Takes the string + mappings/ return the first digit found
-    findMapping :: String -> [(String, Char)] -> Maybe Char
-    findMapping s mappings = fmap snd (find (isWordPrefix s) mappings)
-
-    -- Remove the word from the beginning of the string
-    dropWord :: String -> [(String, Char)] -> String
-    dropWord s mappings = 
-        case find (isWordPrefix s) mappings of
-            Just (word, _) -> 
-                drop (length word - 1) s -- do not drop the last char (avoid edge cases like "oneight")
-            Nothing -> s
-
-    -- Checks if a word from the mappings is a prefix of the given string
-    isWordPrefix :: String -> (String, Char) -> Bool
-    isWordPrefix s (word, _) = isPrefixOf word s
+    replace' "" = ""
+    replace' str
+      | old `isPrefixOf` str = new ++ replace' (drop (length old) str)
+      | otherwise = head str : replace' (tail str) -- otherwise => else guard
